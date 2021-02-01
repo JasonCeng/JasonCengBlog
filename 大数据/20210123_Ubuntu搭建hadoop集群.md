@@ -32,5 +32,7 @@ ubuntu-slave2
 reboot
 ```
 
+## 安装Java
+
 ## 参考
 [1]ubuntu18.04 搭建hadoop完全分布式集群（Master、slave1、slave2）共三个节点[https://blog.csdn.net/sunxiaoju/article/details/85222290]
