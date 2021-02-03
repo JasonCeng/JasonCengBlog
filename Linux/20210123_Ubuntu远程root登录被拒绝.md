@@ -8,8 +8,9 @@ sudo vim /etc/ssh/sshd_config
 新建一行 添加：PermitRootLogin yes
 
 重启服务
-
-#sudo service ssh restart
+```shell
+sudo service ssh restart
+```
 
 ## 附录
 PermitRootLogin的可选项
