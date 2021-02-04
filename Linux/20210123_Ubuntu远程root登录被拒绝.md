@@ -17,7 +17,7 @@ PermitRootLogin的可选项
 众所周知，sshd_config是sshd的配置文件，其中PermitRootLogin可以限定root用户通过ssh的登录方式，如禁止登陆、禁止密码登录、仅允许密钥登陆和开放登陆，以下是对可选项的概括：
 
 参数类别	是否允许ssh登陆	登录方式	交互shell
-yes	允许	没有限制	没有限制
+yes	           允许	       没有限制	    没有限制
 without-password	允许	除密码以外	没有限制
 forced-commands-only	允许	仅允许使用密钥	仅允许已授权的命令
 no	不允许	N/A	N/A
