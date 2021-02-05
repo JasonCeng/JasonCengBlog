@@ -33,8 +33,12 @@ default-character-set=utf8
 default-storage-engine=INNODB
 character_set_server=utf8
 ```
+### 2、复制mysql.server到/etc/init.d/目录下(目的：实现开机自启动)
+```shell
+cp /usr/local/mysql_5.7/support-files/mysql.server /etc/init.d/mysql
+```
 
-### 2、修改/etc/init.d/mysql参数
+### 3、修改/etc/init.d/mysql参数
 ```shell
 vim /etc/init.d/mysql
 
@@ -50,7 +54,7 @@ groupadd mysql
  
 #建立mysql用户，并且把用户放到mysql组
 useradd -r -g mysql mysql
- 
+
 #为mysql用户设置密码
 passwd mysql
 Enter new UNIX password:123456
@@ -163,7 +167,18 @@ password：远程主机用户访问MySQL使用的密码。
 cp /usr/local/mysql_5.7/support-files/mysql.server /etc/init.d/mysql
 ```
 
-### 2、使用update-rc.d添加mysql为开机自启动
+### 2、修改/etc/init.d/mysql参数
+```shell
+vim /etc/init.d/mysql
+
+#修改以下内容：
+basedir=/usr/local/mysql_5.7
+datadir=/usr/local/mysql_5.7/data
+```
+
+以上第1、2步已经在`三、配置文件`中实现过一次，若您已配置上述两个步骤，即可直接使用update-rc.d添加mysql为开机自启动。
+
+### 3、使用update-rc.d添加mysql为开机自启动
 ```shell
 sudo update-rc.d -f mysql defaults
 ```
@@ -240,12 +255,21 @@ mysql> select version();
 
 ## 参考
 [1]Linux系统安装mysql数据库[https://blog.csdn.net/qq_15092079/article/details/81629238]
+
 [2]ubuntu安装mysql遇到的坑----解决Mysql报错缺少libaio.so.1[https://www.cnblogs.com/hufulinblog/p/10124001.html]
+
 [3]linux 生成证书错误[https://www.cnblogs.com/whm-blog/p/12836865.html]
+
 [4]Ubuntu中设置mysql开机自动启动[https://blog.csdn.net/qq_43655686/article/details/112368739]
+
 [5]ubuntu查看mysql版本的几种方法[https://www.cnblogs.com/zlsgh/p/8645589.html]
+
 [6]centos安装mysql5.7.19报 error while loading shared libraries: libaio.so.1[https://blog.csdn.net/m0_38113129/article/details/79056047]
+
 [7]Ubuntu添加和设置开机自动启动程序的方法[https://www.cnblogs.com/the-wang/p/11230087.html]
+
 [8]Ubuntu启动项设置——之update-rc.d 命令使用[https://blog.csdn.net/typ2004/article/details/38712887/]
+
 [9]Linux下ps -ef和ps aux的区别及格式详解[https://www.cnblogs.com/mydriverc/p/8303242.html]
+
 [10]mysql safe 和mysqld_mysqld与mysqld_safe的区别[https://blog.csdn.net/weixin_29358053/article/details/113434173]
