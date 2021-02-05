@@ -127,10 +127,17 @@ mysql> set password=password('新密码');
 ## 五、设置远程访问
 ### 1、打开mysql的默认端口3306
 ```shell
+#打开防火墙
+ufw allow
+
 #设置3306为开放端口
 ufw allow 3306
+
 #重新加载防火墙
 ufw reload
+
+#查看防火墙状态
+ufw status
 ```
 
 *注意：如果你使用的是云服务器，记得在云服务器控制台->安全组中添加开放3306端口*
