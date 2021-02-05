@@ -188,7 +188,8 @@ sudo update-rc.d -f mysql defaults
 vim /etc/profile
 
 #在最后一行加入以下内容
-export PATH=/usr/local/mysql_5.7/bin:$PATH
+export MYSQL_HOME=/usr/local/mysql_5.7
+export PATH=$MYSQL_HOME/bin:$PATH
 
 #使修改生效
 source /etc/profile
