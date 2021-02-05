@@ -214,7 +214,7 @@ mysql  Ver 14.14 Distrib 5.7.23, for linux-glibc2.12 (x86_64) using  EditLine wr
 
 ```shell
 # 进入mysql
-$ mysql -u root -p
+$ mysql -uroot -p
 
 mysql> status;
 --------------
@@ -250,7 +250,7 @@ mysql  Ver 14.14 Distrib 5.7.23, for linux-glibc2.12 (x86_64) using EditLine wra
 ### 4、使用mysql的函数
 ```shell
 # 进入mysql
-$ mysql -u root -p
+$ mysql -uroot -p
 
 mysql> select version();
 +-----------+
