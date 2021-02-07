@@ -5,11 +5,9 @@
 - 服务器数量 >= 2
 - Java 8+
 - 搭建好ZooKeeper集群
-- 防火墙开放2181、2888、3888端口：
+- 防火墙开放9092端口：
 ```shell
-ufw allow 2181
-ufw allow 2888
-ufw allow 3888
+ufw allow 9092
 ufw reload
 ```
 
@@ -25,18 +23,6 @@ $ tar -xzvf kafka_2.13-2.7.0.tgz -C /usr/local
 $ cd /usr/local/kafka_2.13-2.7.0
 ```
 
-### 3、设置环境变量
-```shell
-$ vim /etc/profile
-
-#添加如下内容
-export KAFKA_HOME=/usr/local/kafka_2.13-2.7.0
-export PATH=$KAFKA_HOME/bin:$PATH
-
-#激活环境变量
-source /etc/profile
-```
-
 ## 二、配置文件
 ### 1、创建kafka消息存放目录
 ```shell
@@ -45,7 +31,7 @@ $ mkdir /usr/local/kafka_2.13-2.7.0/kafka_logs
 ```
 ### 2、配置server.properties
 ```shell
-$ vim vim /usr/local/kafka_2.13-2.7.0/config/server.properties
+$ vim /usr/local/kafka_2.13-2.7.0/config/server.properties
 
 # 修改如下内容，下面以服务器1：我的主机名是：ubuntu-master为例
 
@@ -54,7 +40,7 @@ broker.id=0
 #端口
 port=9092
 #broker主机地址
-host.name=ubuntu-master
+host.name=ubuntu-master.com
 
 #消息存放的目录，这个目录可以配置为“，”逗号分割的表达式，上面的num.io.threads要大于这个目录的个数
 #如果配置多个目录，新创建的topic把消息持久化的地方是：当前以逗号分割的目录中，哪个分区数最少就放哪一个
@@ -69,7 +55,7 @@ default.replication.factor=2
 replica.fetch.max.bytes=5242880
 
 #zookeeper集群地址
-zookeeper.connect=ubuntu-master:2181,ubuntu-slave1:2181,ubuntu-slave2:2181
+zookeeper.connect=ubuntu-master.com:2181,ubuntu-slave1.com:2181,ubuntu-slave2.com:2181
 ```
 
 ### 3、[选看]server.properties相关参数解析
@@ -105,7 +91,7 @@ $ scp -r kafka_2.13-2.7.0 root@192.168.1.115:/usr/local/
 
 ### 1、修改服务器2的server.properties
 ```shell
-$ vim vim /usr/local/kafka_2.13-2.7.0/config/server.properties
+$ vim /usr/local/kafka_2.13-2.7.0/config/server.properties
 
 # 需修改内容如下，我的主机名是：ubuntu-slave1
 
@@ -114,11 +100,25 @@ broker.id=1
 #端口
 port=9092
 #broker主机地址
-host.name=ubuntu-slave1
+host.name=ubuntu-slave1.com
+```
+
+### 2、修改服务器3的server.properties
+```shell
+$ vim /usr/local/kafka_2.13-2.7.0/config/server.properties
+
+# 需修改内容如下，我的主机名是：ubuntu-slave2
+
+#每个broker在集群中的唯一标识，不能重复,和zookeeper的myid性质一样
+broker.id=2
+#端口
+port=9092
+#broker主机地址
+host.name=ubuntu-slave2.com
 ```
 
 ## 五、配置环境变量
-需要再各个服务器上进行配置：
+需要在各个服务器上进行配置：
 ```shell
 vim /etc/profile
 
@@ -130,8 +130,71 @@ export PATH=$KAFKA_HOME/bin:$PATH
 source /etc/profile
 ```
 
-## 六、启动Kafka
-在所有节点上启动zkServer
+## 六、启动Kafka集群并测试
+### 1、启动服务
 ```shell
-zkServer.sh start
+#从后台启动Kafka集群（3台都需要启动）
+$ cd /usr/local/kafka_2.13-2.7.0/bin #进入到kafka的bin目录 
+$ ./kafka-server-start.sh -daemon ../config/server.properties
 ```
+
+停止服务：
+```shell
+$ cd /usr/local/kafka_2.13-2.7.0/bin #进入到kafka的bin目录 
+$ ./kafka-server-stop.sh
+```
+
+### 2、检查服务是否启动
+```shell
+#执行命令jps
+3749 Jps
+1767 QuorumPeerMain
+3673 Kafka
+```
+
+### 3、创建Topic来验证是否创建成功
+
+更多请看官方文档：http://kafka.apache.org/documentation.html
+```shell
+$ cd /usr/local/kafka_2.13-2.7.0/bin #进入到kafka的bin目录 
+
+#创建Topic
+$ ./kafka-topics.sh --create --zookeeper 192.168.1.113:2181,192.168.1.114:2181,192.168.1.115:2181 --replication-factor 2 --partitions 1 --topic foo
+#解释
+# --create  表示创建
+# --zookeeper 192.168.1.113:2181  后面的参数是zk的集群节点
+# --replication-factor 2  表示复本数
+# --partitions 1  表示分区数
+# --topic foo  表示主题名称为foo
+
+#查看topic 列表：
+$ ./kafka-topics.sh --list --zookeeper 192.168.1.113:2181,192.168.1.114:2181,192.168.1.115:2181
+    
+#查看指定topic：
+$ ./kafka-topics.sh --describe --zookeeper 192.168.1.113:2181,192.168.1.114:2181,192.168.1.115:2181 --topic foo
+
+#删除topic
+$ ./kafka-topics.sh --delete --zookeeper 192.168.1.113:2181,192.168.1.114:2181,192.168.1.115:2181 --topic foo
+```
+
+### 4、创建生产者
+```shell
+'''在一台服务器上创建一个生产者'''
+#创建一个broker，生产者
+$ ./kafka-console-producer.sh --broker-list 192.168.1.113:9092,192.168.1.114:9092,192.168.1.115:9092 --topic foo
+```
+
+### 5、创建消费者
+```shell
+'''在另一台服务器上创建一个消费者'''
+$ ./kafka-console-consumer.sh --bootstrap-server 192.168.1.113:9092,192.168.1.114:9092,192.168.1.115:9092 --topic foo --from-beginning
+```
+
+*注：Kafka 从 2.2 版本开始将` kafka-topic.sh `脚本中的 ` −−zookeeper `参数标注为 “过时”，推荐使用 ` −−bootstrap-server `参数。*
+
+*端口也由之前的zookeeper通信端口`2181`，改为了kafka通信端口`9092`。*
+
+## 参考
+[1]Kafka【第一篇】Kafka集群搭建[https://www.cnblogs.com/luotianshuai/p/5206662.html]
+
+[2]kafka集群环境搭建[https://www.cnblogs.com/luzhanshi/p/13369834.html]
