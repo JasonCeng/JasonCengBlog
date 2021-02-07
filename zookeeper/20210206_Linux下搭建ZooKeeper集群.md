@@ -54,13 +54,18 @@ dataDir=/usr/local/zookeeper_3.6.2/data
 ```shell
 $ vim /usr/local/zookeeper_3.6.2/conf/zoo.cfg
 
-# 添加如下内容
-
-server.1=192.168.1.113:2888:3888 # server.id=zookeeper节点主机名 或 主机ip:2888:3888  选举端口和投票端口固定
-server.2=192.168.1.114:2888:3888 # 如果有四台zookeeper的话，由于非observer节点数必须为奇数个
-server.3=192.168.1.115:2888:3888 # 所以如果有第四台的话，可以使用如下添加方式
-# server.4=xx.xx.xx.xx:2888:3888:observer   # id是自己定义的，0~255间，不必一次递增，自己定即可，id表示该节点所持有的投票编号id，必需保证全局唯一
+# 添加如下内容：
+server.1=192.168.1.113:2888:3888
+server.2=192.168.1.114:2888:3888
+server.3=192.168.1.115:2888:3888
+# server.id=zookeeper节点主机名 或 主机ip:2888:3888  选举端口和投票端口固定
+# 如果有四台zookeeper的话，由于非observer节点数必须为奇数个
+# 所以如果有第四台的话，可以使用如下添加方式：
+# server.4=xx.xx.xx.xx:2888:3888:observer
+# id是自己定义的，0~255间，不必一次递增，自己定即可，id表示该节点所持有的投票编号id，必需保证全局唯一
 ```
+
+*注意：不要在配置后面加注释#，这会导致cfg文件解析失败！从而导致zookeeper无法正常启动！*
 
 `server.A=B:C:D`中各参数解析如下：
 ```shell
@@ -123,14 +128,31 @@ source /etc/profile
 ## 五、启动zkServer
 在所有节点上启动zkServer
 ```shell
-zkServer.sh start
+$ zkServer.sh start
+
+#输出如下：
+ZooKeeper JMX enabled by default
+Using config: /usr/local/zookeeper_3.6.2/bin/../conf/zoo.cfg
+Starting zookeeper ... STARTED
 ```
 
 查看集群节点状态：
 ```shell
-zkServer.sh status
+$ zkServer.sh status
+
+#一个节点输出如下：
+ZooKeeper JMX enabled by default
+Using config: /usr/local/zookeeper_3.6.2/bin/../conf/zoo.cfg
+Client port found: 2181. Client address: localhost. Client SSL: false.
+Mode: leader
+
+#另外两个节点输出如下：
+ZooKeeper JMX enabled by default
+Using config: /usr/local/zookeeper_3.6.2/bin/../conf/zoo.cfg
+Client port found: 2181. Client address: localhost. Client SSL: false.
+Mode: follower
 ```
-如果状态中有`follower`或`observer`或`leader`表示搭建成功（leader只能有一台）
+有一台服务器的zk Mode为`leader `，另外两台服务器的zk Mode为`follower`，如果配置了`observer`节点，则会有一台服务器的zk Mode为`observer`。
 
 停止命令：
 ```shell
@@ -142,7 +164,13 @@ zkServer.sh stop
 zkServer.sh restart
 ```
 
-至此zookeeper集群环境搭建结束。
+## 六、查看ZooKeeper日志
+```shell
+$ cd /usr/local/zookeeper_3.6.2/logs
+$ cat zookeeper-<somthing>.out
+```
+
+至此，ZooKeeper集群环境搭建结束。
 
 ## 参考
 [1]Apache Zookeeper 集群的搭建[https://blog.csdn.net/qq_33713328/article/details/88854991]

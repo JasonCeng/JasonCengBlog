@@ -1,4 +1,4 @@
-# Linux下安装kafka
+# Linux下安装kafka(Standlone)
 
 ## 环境依赖
 - Java 8+
