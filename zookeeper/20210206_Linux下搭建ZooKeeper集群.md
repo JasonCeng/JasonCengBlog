@@ -126,7 +126,7 @@ source /etc/profile
 ```
 
 ## 五、启动zkServer
-在所有节点上启动zkServer
+在**所有节点**上启动zkServer
 ```shell
 $ zkServer.sh start
 
@@ -165,6 +165,7 @@ zkServer.sh restart
 ```
 
 ## 六、查看ZooKeeper日志
+如果启动过程出现了failed，可通过查看详细日志进行分析：
 ```shell
 $ cd /usr/local/zookeeper_3.6.2/logs
 $ cat zookeeper-<somthing>.out
