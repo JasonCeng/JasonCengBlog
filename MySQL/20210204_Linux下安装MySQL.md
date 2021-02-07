@@ -143,6 +143,7 @@ ufw status
 *注意：如果你使用的是云服务器，记得在云服务器控制台->安全组中添加开放3306端口*
 
 ### 2、设置mysql的远程访问
+下面以`root`用户为例，`mysql`用户同理。
 ```shell
 #设置远程访问账号，若最后加上with grant option，则同时可以赋予权限的权限
 mysql> grant all privileges on *.* to root@'%' identified by '密码';
