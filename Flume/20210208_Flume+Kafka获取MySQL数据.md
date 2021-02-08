@@ -11,14 +11,67 @@
 ## 一、下载&打包flume-ng-sql-source插件
 ### 1、下载
 ```shell
+$ cd /data/gitproject
 $ git clone git@github.com:keedio/flume-ng-sql-source.git
+$ cd flume-ng-sql-source
+$ vim pom.xml
+
+#在
+#<build>
+#        <plugins>
+#内添加如下内容，maven-dependency-plugin是一个可以将当前maven项目所有依赖的jar文件提取到指定文件夹的工具
+            <plugin>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <configuration>
+                    <outputDirectory>$FLUME_HOME/lib</outputDirectory>
+                    <excludeTransitive>false</excludeTransitive>
+                    <stripVersion>true</stripVersion>
+                </configuration>
+            </plugin>
+            ...
+
+# outputDirectory是指定jar包提取路径，表示target目录。如果不写的话，将在根目录下创建lib目录。
+# excludeTransitive，表示是否不包含间接依赖的包。
+# stripVersion表示复制的jar文件去掉版本信息。
+
+# 执行如下maven命令，所有依赖的jar将提取到lib目录：
+$ mvn dependency:copy-dependencies
+
+
 ```
 
 ### 2、打包
-通过idea运行程序，使用`maven`打包为jar包，改名为`flume-ng-sql-source-1.5.3.jar`
+通过`maven`打jar包：
+```shell
+# 编译Java项目
+$ mvn clean
+$ mvn compile
+$ mvn package
 
-### 3、上传到`FLUME_HOME/lib`目录
-把`flume-ng-sql-source-1.5.3.jar`放在放到`$FLUME_HOME/lib`下
+# 执行完毕后，在./target文件夹下将会有构建好的项目对应的jar包
+root@ubuntu-master:/data/gitproject/flume-ng-sql-source/target# ll
+total 9088
+drwxr-xr-x 11 root root    4096 2月   8 19:53 ./
+drwxr-xr-x  5 root root    4096 2月   8 20:21 ../
+drwxr-xr-x  3 root root    4096 2月   8 19:53 apidocs/
+drwxr-xr-x  3 root root    4096 2月   8 19:50 classes/
+-rw-r--r--  1 root root 9163594 2月   8 19:52 flume-ng-sql-source-1.5.3-SNAPSHOT.jar #这个就是我们要的jar包
+-rw-r--r--  1 root root   59249 2月   8 19:53 flume-ng-sql-source-1.5.3-SNAPSHOT-javadoc.jar
+-rw-r--r--  1 root root   10856 2月   8 19:53 flume-ng-sql-source-1.5.3-SNAPSHOT-sources.jar
+drwxr-xr-x  3 root root    4096 2月   8 19:50 generated-sources/
+drwxr-xr-x  3 root root    4096 2月   8 19:52 generated-test-sources/
+drwxr-xr-x  2 root root    4096 2月   8 19:53 javadoc-bundle-options/
+drwxr-xr-x  2 root root    4096 2月   8 19:52 maven-archiver/
+drwxr-xr-x  3 root root    4096 2月   8 19:50 maven-status/
+-rw-r--r--  1 root root   17724 2月   8 19:52 original-flume-ng-sql-source-1.5.3-SNAPSHOT.jar
+drwxr-xr-x  2 root root    4096 2月   8 19:52 surefire-reports/
+drwxr-xr-x  3 root root    4096 2月   8 19:52 test-classes/
+```
+
+### 3、复制jar包到`$FLUME_HOME/lib`目录
+```shell
+$ cp /data/gitproject/flume-ng-sql-source/target/flume-ng-sql-source-1.5.3-SNAPSHOT.jar $FLUME_HOME/lib/flume-ng-sql-source-1.5.3.jar
+```
 
 *注：`$FLUME_HOME`是自己linux下flume的文件夹，比如我的是`/usr/local/flume_1.9.0`*
 
@@ -105,9 +158,16 @@ a1.sinks.k1.type = org.apache.flume.sink.kafka.KafkaSink
 a1.sinks.k1.topic = testTopic
 # kafka集群，broker列表，由于我没有使用集群所以只有一个
 # 如果你搭建了集群，代码如下：agent.sinks.k1.brokerList = kafka-node1:9092,kafka-node2:9092,kafka-node3:9092
-a1.sinks.k1.brokerList = 10.100.4.6:9092
+# Flume 1.6- 的写法
+#a1.sinks.k1.brokerList = 192.168.1.113:9092,192.168.1.114:9092,192.168.1.115:9092
+# Flume 1.7+ 的写法
+a1.sinks.k1.kafka.bootstrap.servers=192.168.1.113:9092,192.168.1.114:9092,192.168.1.115:9092
 a1.sinks.k1.requiredAcks = 1
 a1.sinks.k1.batchSize = 20
+
+# Bind the source and sink to the channel
+a1.sinks.k1.channel=ch-1
+a1.sources.src-1.channels=ch-1
 ```
 
 ## 四、添加mysql驱动到flume的lib目录下
@@ -137,7 +197,7 @@ $ ./kafka-server-start.sh -daemon ../config/server.properties
 新建一个topic
 ```shell
 $ cd $KAFKA_HOME
-$ bin/kafka-topics.sh --create --zookeeper 192.168.1.113:2181,192.168.1.114:2181,192.168.1.115:2181 --replication-factor 2 --partitions 1 --topic testTopic
+$ bin/kafka-topics.sh --create --zookeeper 192.168.1.113:2181,192.168.1.114:2181,192.168.1.115:2181 --replication-factor 1 --partitions 1 --topic testTopic
 ```
 - 注1：testTopic就是你使用的topic名称，这个和上文`mysql-flume.conf`里的内容是对应的。
 
@@ -162,13 +222,23 @@ mysql>
 flume会实时采集数据到kafka中，我们可以启动一个kafak的消费监控，用于查看mysql的实时数据。
 ```shell
 $ cd $KAFKA_HOME
-$ bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic testTopic --from-beginning
+$ bin/kafka-console-consumer.sh --bootstrap-server 192.168.1.113:9092,192.168.1.114:9092,192.168.1.115:9092 --topic testTopic --from-beginning
 ```
-这时就可以查看数据了，kafka会打印Flume所采集的MySQL中的数据。
+
+我们在MySQL数据库中新插入`(1,'xiaohong',18),(2,'xiaobai',20)`，这时就可以在Kafka消费者终端查看数据了，kafka会打印Flume所采集的MySQL中的数据。
+![before](./img/before.png)
 
 ### 2、修改MySQL数据，查看变化
-我们更改数据库中的一条数据，Kafka消费者新读取到的Flume所采集的数据也会变更。
+我们在数据库中新增一条数据，Kafka消费者新读取到的Flume所采集的数据也会变更。
 
+如我们新插入一条数据为`(3,'heiheiheiheihei',22)`，Kafka消费者终端会打印如下：
+
+![after](./img/after.png)
 
 ## 参考
-[1]https://www.cnblogs.com/kylinxxx/p/14137607.html
+[1]flume实时采集mysql数据到kafka中并输出[https://www.cnblogs.com/kylinxxx/p/14137607.html]
+[2]Flume常见错误整理（持续更新ing...）[https://blog.csdn.net/dr_guo/article/details/52193881]:参考其mysql-flume.conf配置
+[3]https://github.com/keedio/flume-ng-sql-source
+[4]https://cwiki.apache.org/confluence/display/FLUME/Getting+Started
+[5]在linux上编译maven工程[https://www.jianshu.com/p/672be18b0f54]
+[6]利用maven将项目依赖的jar提取到指定文件夹[https://blog.51cto.com/keeplearning/1225581]
