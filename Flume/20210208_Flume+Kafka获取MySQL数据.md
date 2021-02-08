@@ -1,0 +1,174 @@
+# Flume+Kafka获取MySQL数据
+
+## 环境依赖
+- Java 8+
+- Flume 1.9
+- Kafka 2.7
+- ZooKeeper 3.6
+- MySQL 5.7.23
+- Git
+
+## 一、下载&打包flume-ng-sql-source插件
+### 1、下载
+```shell
+$ git clone git@github.com:keedio/flume-ng-sql-source.git
+```
+
+### 2、打包
+通过idea运行程序，使用`maven`打包为jar包，改名为`flume-ng-sql-source-1.5.3.jar`
+
+### 3、上传到`FLUME_HOME/lib`目录
+把`flume-ng-sql-source-1.5.3.jar`放在放到`$FLUME_HOME/lib`下
+
+*注：`$FLUME_HOME`是自己linux下flume的文件夹，比如我的是`/usr/local/flume_1.9.0`*
+
+
+## 二、新建数据库和表
+接下来我们要使用Flume采集MySQL数据库中的相关表数据。
+
+这里我们新建一个数据库和表，并且要记住这个数据库和表的名字，之后这些信息要写入Flume的配置文件。
+
+创建数据库：
+```sql
+create database test;
+```
+
+创建表：
+```sql
+use test;
+create table fk (
+id int UNSIGNED AUTO_INCREMENT,
+name VARCHAR(100) NOT NULL,
+age int NOT NULL,
+PRIMARY KEY ( id )
+);
+```
+
+## 三、新增配置文件（重要）
+在flume的conf文件夹中，新增一个文件mysql-flume.conf
+```shell
+$ cd /usr/local/flume_1.9.0/conf
+$ vim mysql-flume.conf
+```
+注：mysql-flume.conf本来是没有的，是我生成的，具体配置如下所示
+```shell
+# a1表示agent的名称
+# source是a1的输入源
+# channels是缓冲区
+# sinks是a1输出目的地，本例子sinks使用了kafka
+a1.channels = ch-1
+a1.sources = src-1
+a1.sinks = k1
+###########sql source#################
+# For each one of the sources, the type is defined
+a1.sources.src-1.type = org.keedio.flume.source.SQLSource
+# 连接mysql的一系列操作，youhost改为你虚拟机的ip地址，可以通过ifconfig或者ip addr查看
+# url中要加入?useUnicode=true&characterEncoding=utf-8&useSSL=false，否则有可能连接失败
+a1.sources.src-1.hibernate.connection.url = jdbc:mysql://youhost:3306/test?useUnicode=true&characterEncoding=utf-8&useSSL=false
+# Hibernate Database connection properties
+# mysql账号，一般都是root
+a1.sources.src-1.hibernate.connection.user = root
+# 填入你的mysql密码
+a1.sources.src-1.hibernate.connection.password = xxxxxxxx
+a1.sources.src-1.hibernate.connection.autocommit = true
+# mysql驱动
+a1.sources.src-1.hibernate.dialect = org.hibernate.dialect.MySQL5Dialect
+# 驱动版本过低会无法使用，驱动安装下文会提及
+a1.sources.src-1.hibernate.connection.driver_class = com.mysql.jdbc.Driver
+a1.sources.src-1.run.query.delay=5000
+# 存放status文件
+a1.sources.src-1.status.file.path = /opt/install/flume/status
+a1.sources.src-1.status.file.name = sqlSource.status
+# Custom query
+a1.sources.src-1.start.from = 0
+# 填写需要采集的数据表信息，你也可以使用下面的方法：
+# agent.sources.sql-source.table =table_name
+# agent.sources.sql-source.columns.to.select = *
+a1.sources.src-1.custom.query = select `id`, `name` from fk
+a1.sources.src-1.batch.size = 1000
+a1.sources.src-1.max.rows = 1000
+a1.sources.src-1.hibernate.connection.provider_class = org.hibernate.connection.C3P0ConnectionProvider
+a1.sources.src-1.hibernate.c3p0.min_size=1
+a1.sources.src-1.hibernate.c3p0.max_size=10
+
+################################################################
+a1.channels.ch-1.type = memory
+a1.channels.ch-1.capacity = 10000
+a1.channels.ch-1.transactionCapacity = 10000
+a1.channels.ch-1.byteCapacityBufferPercentage = 20
+a1.channels.ch-1.byteCapacity = 800000
+
+################################################################
+# 使用kafka
+a1.sinks.k1.type = org.apache.flume.sink.kafka.KafkaSink
+# 这个项目中你创建的或使用的topic名字
+a1.sinks.k1.topic = testTopic
+# kafka集群，broker列表，由于我没有使用集群所以只有一个
+# 如果你搭建了集群，代码如下：agent.sinks.k1.brokerList = kafka-node1:9092,kafka-node2:9092,kafka-node3:9092
+a1.sinks.k1.brokerList = 10.100.4.6:9092
+a1.sinks.k1.requiredAcks = 1
+a1.sinks.k1.batchSize = 20
+```
+
+## 四、添加mysql驱动到flume的lib目录下
+```shell
+$ cd /data
+$ wget https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.49.tar.gz
+$ tar -zxvf mysql-connector-java-5.1.49.tar.gz
+$ cp /data/mysql-connector-java-5.1.49/mysql-connector-java-5.1.49-bin.jar $FLUME_HOME/lib/
+```
+
+## 五、启动相关组件
+### 1、启动ZooKeeper
+在**所有节点**上启动zkServer
+```shell
+$ cd $ZOOKEEPER_HOME/bin
+$ zkServer.sh start
+```
+
+### 2、启动Kafka
+新开一个终端窗口
+```shell
+#从后台启动Kafka集群（3台都需要启动）
+$ cd $KAFKA_HOME/bin #进入到kafka的bin目录 
+$ ./kafka-server-start.sh -daemon ../config/server.properties
+```
+
+新建一个topic
+```shell
+$ cd $KAFKA_HOME
+$ bin/kafka-topics.sh --create --zookeeper 192.168.1.113:2181,192.168.1.114:2181,192.168.1.115:2181 --replication-factor 2 --partitions 1 --topic testTopic
+```
+- 注1：testTopic就是你使用的topic名称，这个和上文`mysql-flume.conf`里的内容是对应的。
+
+- 注2：可以使用`bin/kafka-topics.sh --list --zookeeper 192.168.1.113:2181,192.168.1.114:2181,192.168.1.115:2181`来查看已创建的topic。
+
+### 3、启动flume
+新开一个终端窗口
+```shell
+$ cd $FLUME_HOME
+$ bin/flume-ng agent -n a1 -c conf -f conf/mysql-flume.conf -Dflume.root.logger=INFO,console
+```
+
+## 4、启动mysql终端
+新开一个终端窗口
+```shell
+$ mysql -u mysql -p
+mysql> 
+```
+
+## 六、实时采集数据
+### 1、启动kafka消费者查看flume采集的MySQL数据
+flume会实时采集数据到kafka中，我们可以启动一个kafak的消费监控，用于查看mysql的实时数据。
+```shell
+$ cd $KAFKA_HOME
+$ bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic testTopic --from-beginning
+```
+这时就可以查看数据了，kafka会打印Flume所采集的MySQL中的数据。
+
+### 2、修改MySQL数据，查看变化
+我们更改数据库中的一条数据，Kafka消费者新读取到的Flume所采集的数据也会变更。
+
+
+## 参考
+[1]https://www.cnblogs.com/kylinxxx/p/14137607.html
