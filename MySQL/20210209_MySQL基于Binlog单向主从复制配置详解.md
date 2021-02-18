@@ -106,7 +106,9 @@ insert into fk values(1,'xiaohong',18),(2,'xiaobai',20),(3,'heiheiheiheihei',22)
 ```sql
 mysql> flush tables with read lock;
 ```
+
 （2）进行备份
+
 这里只备份test库（`--databases`指定），`--add-drop-table`参数用于在每一个建表语句前添加drop table语句。
 ```sql
 $ mysqldump -p3306 -uroot -p --add-drop-table test > /tmp/master-testdb.sql;
