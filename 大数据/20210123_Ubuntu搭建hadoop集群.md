@@ -68,7 +68,30 @@ $ su hadoop
 ```
 
 ## 四、建立ssh无密码登录本机
+ssh生成密钥有`rsa`和`dsa`两种生成方式，默认情况下采用rsa方式。
 
+1、首先用hadoop用户在master主机上创建ssh-key
+
+这里我们采用rsa方式。使用如下命令(P是要大写的，后面跟""，表示无密码)
+```shell
+$ ssh-keygen -t rsa -P ""
+```
+
+直接回车即可。
+
+2、回车后会在~/.ssh/下生成两个文件：id_rsa和id_rsa.pub
+```shell
+$ ls ~/.ssh/
+id_rsa  id_rsa.pub
+```
+
+***、创建authorized_keys文件
+
+将id_rsa.pub、slave1_id_rsa.pub、slave2_id_rsa.pub追加到authorized_keys授权文件中，开始是没有authorized_keys文件的，只需要执行如下命令即可：
+```shell
+$ cd ~/.ssh
+$ cat *.pub >>authorized_keys
+```
 
 ## 五、安装hadoop
 1、下载hadoop
@@ -260,9 +283,9 @@ $ sudo vim $HADOOP_HOME/etc/hadoop/mapred-site.xml
 
 7、编辑slaves文件
 ```shell
-$ sudo vim $HADOOP_HOME/etc/hadoop/slaves
+$ sudo vim $HADOOP_HOME/etc/hadoop/workers
 
-#修改为：
+#删除localhost，修改为：
 ubuntu-slave1.com
 ubuntu-slave2.com
 ```
@@ -280,7 +303,23 @@ $ hdfs namenode -format
 ```
 
 ## 八、启动Hadoop
-在master上开启hadoop
+在master上开启hadoop：
+```shell
+$ cd $HADOOP_HOME/sbin
+$ ./start-all.sh
+```
+
+查看启动情况：
+```shell
+$ jps
+26226 NodeManager
+25858 SecondaryNameNode
+26094 ResourceManager
+26591 Jps
+```
 
 ## 参考
 [1]ubuntu18.04 搭建hadoop完全分布式集群（Master、slave1、slave2）共三个节点[https://blog.csdn.net/sunxiaoju/article/details/85222290]
+
+[2] hadoop集群搭建(hadoop-3.1.3)[https://www.cnblogs.com/hxuhongming/p/12872007.html]
+
