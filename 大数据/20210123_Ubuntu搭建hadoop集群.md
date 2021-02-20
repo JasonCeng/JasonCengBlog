@@ -53,7 +53,7 @@ $ cat /etc/group |grep hadoop
 
 4、把hadoop用户赋予root权限，让他可以使用sudo命令，使用如下命令编辑
 ```shell
-sudo vim /etc/sudoers
+$ sudo vim /etc/sudoers
 
 #修改文件如下：
 #root   ALL=(ALL) ALL 下一行新增：
@@ -281,7 +281,7 @@ $ sudo vim $HADOOP_HOME/etc/hadoop/mapred-site.xml
 #</configuration>
 ```
 
-7、编辑slaves文件
+7、编辑workers文件
 ```shell
 $ sudo vim $HADOOP_HOME/etc/hadoop/workers
 
@@ -289,6 +289,8 @@ $ sudo vim $HADOOP_HOME/etc/hadoop/workers
 ubuntu-slave1.com
 ubuntu-slave2.com
 ```
+
+注意：如果是`hadoop 2.x`版本，则是`slaves`文件；笔者这里搭建的是`hadoop 3.x`版本，使用的是`workers`文件。
 
 8、对$HADOOP_HOME添加写入权限
 ```shell
