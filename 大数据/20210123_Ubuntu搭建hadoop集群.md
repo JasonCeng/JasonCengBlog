@@ -62,7 +62,13 @@ hadoop  ALL=(root) NOPASSWD:ALL
 
 5、用同样方法在slave1和slave2上创建hadoop用户。
 
+***注意：后续操作均切换到hadoop用户执行：***
+```shell
+$ su hadoop
+```
+
 ## 四、建立ssh无密码登录本机
+
 
 ## 五、安装hadoop
 1、下载hadoop
@@ -88,8 +94,8 @@ $ tar -zxvf hadoop-3.2.2.tar.gz -C /usr/local
 4、添加hadoop环境变量
 ```shell
 $ vim /etc/profile
-#添加如下配置
 
+#添加如下配置
 export HADOOP_HOME=/usr/local/hadoop-3.2.2
 export HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop
 export PATH=$PATH:$HADOOP_HOME/
@@ -222,33 +228,33 @@ $ sudo vim $HADOOP_HOME/etc/hadoop/mapred-site.xml
 # 在标签<configuration>中添加以下代码：
 #<configuration>
     <property>
-                <name>yarn.resourcemanager.address</name>
-                <value>ubuntu-master.com:18040</value>
-        </property>
-        <property>
-                <name>yarn.resourcemanager.scheduler.address</name>
-                <value>ubuntu-master:18030</value>
-        </property>
-        <property>
-                <name>yarn.resourcemanager.webapp.address</name>
-                <value>ubuntu-master:18088</value>
-        </property>
-        <property>
-                <name>yarn.resourcemanager.resource-tracker.address</name>
-                <value>ubuntu-master:18025</value>
-        </property>
-        <property>
-                <name>yarn.resourcemanager.admin.address</name>
-                <value>ubuntu-master:18141</value>
-        </property>
-        <property>
-                <name>yarn.nodemanager.aux-services</name>
-                <value>mapreduce_shuffle</value>
-        </property>
-        <property>
-            <name>yarn.nodemanager.auxservices.mapreduce.shuffle.class</name>
-                <value>org.apache.hadoop.mapred.ShuffleHandler</value>
-        </property>
+        <name>yarn.resourcemanager.address</name>
+        <value>ubuntu-master.com:18040</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.scheduler.address</name>
+        <value>ubuntu-master:18030</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.webapp.address</name>
+        <value>ubuntu-master:18088</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.resource-tracker.address</name>
+        <value>ubuntu-master:18025</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.admin.address</name>
+        <value>ubuntu-master:18141</value>
+    </property>
+    <property>
+        <name>yarn.nodemanager.aux-services</name>
+        <value>mapreduce_shuffle</value>
+    </property>
+    <property>
+        <name>yarn.nodemanager.auxservices.mapreduce.shuffle.class</name>
+        <value>org.apache.hadoop.mapred.ShuffleHandler</value>
+    </property>
 #</configuration>
 ```
 
@@ -272,6 +278,9 @@ $ sudo chmod -R 777 /usr/local/hadoop-3.2.2
 ```shell
 $ hdfs namenode -format
 ```
+
+## 八、启动Hadoop
+在master上开启hadoop
 
 ## 参考
 [1]ubuntu18.04 搭建hadoop完全分布式集群（Master、slave1、slave2）共三个节点[https://blog.csdn.net/sunxiaoju/article/details/85222290]
