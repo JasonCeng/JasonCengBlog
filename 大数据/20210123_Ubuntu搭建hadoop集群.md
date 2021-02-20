@@ -233,19 +233,19 @@ $ sudo vim $HADOOP_HOME/etc/hadoop/mapred-site.xml
     </property>
     <property>
         <name>yarn.resourcemanager.scheduler.address</name>
-        <value>ubuntu-master:18030</value>
+        <value>ubuntu-master.com:18030</value>
     </property>
     <property>
         <name>yarn.resourcemanager.webapp.address</name>
-        <value>ubuntu-master:18088</value>
+        <value>ubuntu-master.com:18088</value>
     </property>
     <property>
         <name>yarn.resourcemanager.resource-tracker.address</name>
-        <value>ubuntu-master:18025</value>
+        <value>ubuntu-master.com:18025</value>
     </property>
     <property>
         <name>yarn.resourcemanager.admin.address</name>
-        <value>ubuntu-master:18141</value>
+        <value>ubuntu-master.com:18141</value>
     </property>
     <property>
         <name>yarn.nodemanager.aux-services</name>
@@ -274,7 +274,7 @@ $ sudo chmod -R 777 /usr/local/hadoop-3.2.2
 
 9、格式化master节点的namenode
 
-在master主机上执行
+在master主机上执行：
 ```shell
 $ hdfs namenode -format
 ```
