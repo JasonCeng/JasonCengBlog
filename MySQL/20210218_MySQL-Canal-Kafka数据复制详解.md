@@ -7,27 +7,76 @@
 
 对于自建 MySQL , 需要先开启 Binlog 写入功能，配置 binlog-format 为 ROW 模式，my.cnf 中配置如下
 ```shell
+$ vim /etc/my.cnf
+
 [mysqld]
 log-bin=mysql-bin # 开启 binlog
 binlog-format=ROW # 选择 ROW 模式
 server_id=1 # 配置 MySQL replaction 需要定义，不要和 canal 的 slaveId 重复
+
+#重启MySQL数据库
+$ service mysql restart
 ```
 
 ### 2、创建并授权canal用户
 授权 canal 链接 MySQL 账号具有作为 MySQL slave 的权限, 如果已有账户可直接 grant
 
 ```shell
-CREATE USER canal IDENTIFIED BY 'canal';  
-GRANT SELECT, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'canal'@'%';
--- GRANT ALL PRIVILEGES ON *.* TO 'canal'@'%' ;
-FLUSH PRIVILEGES;
+> CREATE USER canal IDENTIFIED BY 'canal';  
+> GRANT SELECT, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'canal'@'%';
+-->  GRANT ALL PRIVILEGES ON *.* TO 'canal'@'%' ;
+> FLUSH PRIVILEGES;
 ```
 
 ## 二、安装ZooKeeper
 
+参考：<a href='https://github.com/JasonCeng/JasonCengBlog/blob/main/zookeeper/20210206_Linux%E4%B8%8B%E6%90%AD%E5%BB%BAZooKeeper%E9%9B%86%E7%BE%A4.md' target='_blank'>JasonCengBlog/zookeeper/20210206_Linux下搭建ZooKeeper集群.md</a>
+
+1、在**所有节点**上启动zkServer
+```shell
+$ zkServer.sh start&
+```
+
+2、查看节点状态
+```shell
+$ zkServer.sh status
+```
+
+
 
 ## 三、安装KafKa
 
+参考：<a href='https://github.com/JasonCeng/JasonCengBlog/blob/main/Kafka/20210207_Linux%E4%B8%8B%E6%90%AD%E5%BB%BAkafka%E9%9B%86%E7%BE%A4.md' target='_blank'>JasonCengBlog/Kafka/20210207_Linux下搭建kafka集群.md</a>
+
+1、在**所有节点**上启动kafka
+```shell
+#从后台启动Kafka集群（3台都需要启动）
+$ cd /usr/local/kafka_2.13-2.7.0/bin #进入到kafka的bin目录 
+$ ./kafka-server-start.sh -daemon ../config/server.properties
+
+#查看kafka是否启动
+$ jps
+```
+
+2、创建Topic
+```shell
+$ cd /usr/local/kafka_2.13-2.7.0/bin #进入到kafka的bin目录 
+
+#创建Topic
+$ ./kafka-topics.sh --create --zookeeper 192.168.1.113:2181,192.168.1.114:2181,192.168.1.115:2181 --replication-factor 2 --partitions 1 --topic example
+#解释
+# --create  表示创建
+# --zookeeper 192.168.1.113:2181  后面的参数是zk的集群节点
+# --replication-factor 2  表示复本数
+# --partitions 1  表示分区数
+# --topic foo  表示主题名称为example
+
+#查看topic 列表：
+$ ./kafka-topics.sh --list --zookeeper 192.168.1.113:2181,192.168.1.114:2181,192.168.1.115:2181
+    
+#查看指定topic：
+$ ./kafka-topics.sh --describe --zookeeper 192.168.1.113:2181,192.168.1.114:2181,192.168.1.115:2181 --topic example
+```
 
 ## 四、安装Canal.server
 
@@ -49,7 +98,7 @@ $ tar -zxvf canal.deployer-1.1.5-SNAPSHOT.tar.gz -C /usr/local/canal
 
 #### 3、修改instance配置文件
 ```shell
-$ vim conf/example/instance.properties
+$ vim /usr/local/canal/conf/example/instance.properties
 
 ## mysql serverId
 canal.instance.mysql.slaveId = 1234
@@ -69,6 +118,12 @@ canal.instance.defaultDatabaseName =
 canal.instance.connectionCharset = UTF-8
 #table regex
 canal.instance.filter.regex = .\*\\\\..\*
+# mq config
+canal.mq.topic=example
+# dynamic topic route by schema or table regex
+#canal.mq.dynamicTopic=mytest1.user,mytest2\\..*,.*\\..*
+canal.mq.partition=0
+
 ```
 `canal.instance.connectionCharset`代表数据库的编码方式对应到 java 中的编码类型，比如 UTF-8，GBK，ISO-8859-1
 
@@ -109,9 +164,9 @@ $ cd /usr/local/canal/
 $ sh bin/startup.sh
 ```
 
-#### 6、查看 server 日志
+#### 6、查看server日志
 ```shell
-$ vim logs/canal/canal.log
+$ vim /usr/local/canal/logs/canal/canal.log
 ```
 
 ```log
@@ -122,9 +177,9 @@ $ vim logs/canal/canal.log
 2021-02-22 15:45:30.351 [main] INFO  com.alibaba.otter.canal.deployer.CanalStarter - ## the canal server is running now ......
 ```
 
-#### 7、查看 instance 的日志
+#### 7、查看instance的日志
 ```shell
-$ vim logs/example/example.log
+$ vim /usr/local/canal/logs/example/example.log
 ```
 
 ```log
@@ -146,3 +201,23 @@ $ cd /usr/local/canal/
 $ sh bin/stop.sh
 ```
 
+## 五、查看Canal数据同步情况
+
+### (一)通过Kafka消费者查看
+
+#### 1、启动Kafka消费者
+在另一台服务器上创建一个消费者：
+```shell
+$ cd /usr/local/kafka_2.13-2.7.0/bin
+$ ./kafka-console-consumer.sh --bootstrap-server 192.168.1.113:9092,192.168.1.114:9092,192.168.1.115:9092 --topic example --from-beginning
+```
+
+*注：Kafka 从 2.2 版本开始将` kafka-topic.sh `脚本中的 ` −−zookeeper `参数标注为 “过时”，推荐使用 ` −−bootstrap-server `参数。*
+
+*端口也由之前的zookeeper通信端口`2181`，改为了kafka通信端口`9092`。*
+
+#### 2、在源mysql数据库上修改数据
+```sql
+mysql> use test;
+mysql> insert into fk values(6,'test',18);
+```
