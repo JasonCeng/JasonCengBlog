@@ -73,7 +73,7 @@ $ ./kafka-topics.sh --create --zookeeper 192.168.1.113:2181,192.168.1.114:2181,1
 
 #查看topic 列表：
 $ ./kafka-topics.sh --list --zookeeper 192.168.1.113:2181,192.168.1.114:2181,192.168.1.115:2181
-    
+
 #查看指定topic：
 $ ./kafka-topics.sh --describe --zookeeper 192.168.1.113:2181,192.168.1.114:2181,192.168.1.115:2181 --topic example
 ```
@@ -96,7 +96,8 @@ $ mkdir /usr/local/canal
 $ tar -zxvf canal.deployer-1.1.5-SNAPSHOT.tar.gz -C /usr/local/canal
 ```
 
-#### 3、修改instance配置文件
+### （二）修改配置文件
+#### 1、修改instance配置文件
 ```shell
 $ vim /usr/local/canal/conf/example/instance.properties
 
@@ -129,7 +130,7 @@ canal.mq.partition=0
 
 如果系统是1个 cpu，需要将` canal.instance.parser.parallel `设置为`false`
 
-#### 4、修改canal配置文件
+#### 2、修改canal配置文件
 ```shell
 $ vim /usr/local/canal/conf/canal.properties
 
@@ -158,13 +159,14 @@ canal.mq.acks = all
 canal.mq.transaction = false
 ```
 
-#### 5、启动
+### （三）启动canal
+#### 1、启动
 ```shell
 $ cd /usr/local/canal/
 $ sh bin/startup.sh
 ```
 
-#### 6、查看server日志
+#### 2、查看server日志
 ```shell
 $ vim /usr/local/canal/logs/canal/canal.log
 ```
@@ -177,7 +179,7 @@ $ vim /usr/local/canal/logs/canal/canal.log
 2021-02-22 15:45:30.351 [main] INFO  com.alibaba.otter.canal.deployer.CanalStarter - ## the canal server is running now ......
 ```
 
-#### 7、查看instance的日志
+#### 3、查看instance的日志
 ```shell
 $ vim /usr/local/canal/logs/example/example.log
 ```
@@ -195,7 +197,7 @@ $ vim /usr/local/canal/logs/example/example.log
 2021-02-22 16:54:27.179 [main] INFO  c.a.otter.canal.instance.core.AbstractCanalInstance - start successful....
 ```
 
-#### 8、关闭
+#### 4、关闭
 ```shell
 $ cd /usr/local/canal/
 $ sh bin/stop.sh
@@ -209,7 +211,7 @@ $ sh bin/stop.sh
 在另一台服务器上创建一个消费者：
 ```shell
 $ cd /usr/local/kafka_2.13-2.7.0/bin
-$ ./kafka-console-consumer.sh --bootstrap-server 192.168.1.113:9092,192.168.1.114:9092,192.168.1.115:9092 --topic example --from-beginning
+$ ./kafka-console-consumer.sh --bootstrap-server 192.168.1.114:9092 --topic example --from-beginning
 ```
 
 *注：Kafka 从 2.2 版本开始将` kafka-topic.sh `脚本中的 ` −−zookeeper `参数标注为 “过时”，推荐使用 ` −−bootstrap-server `参数。*

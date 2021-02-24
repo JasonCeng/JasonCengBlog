@@ -1,0 +1,24 @@
+021-02-24 10:06:35.685 [pool-4-thread-1] ERROR c.a.o.canal.connector.kafka.producer.CanalKafkaProducer - java.util.concurrent.ExecutionException: org.apache.kafka.common.errors.TimeoutException: Failed to update metadata after 60000 ms.
+java.lang.RuntimeException: java.util.concurrent.ExecutionException: org.apache.kafka.common.errors.TimeoutException: Failed to update metadata after 60000 ms.
+        at com.alibaba.otter.canal.connector.kafka.producer.CanalKafkaProducer.send(CanalKafkaProducer.java:183) ~[na:na]
+        at com.alibaba.otter.canal.server.CanalMQStarter.worker(CanalMQStarter.java:185) [canal.server-1.1.5-SNAPSHOT.jar:na]
+        at com.alibaba.otter.canal.server.CanalMQStarter.access$500(CanalMQStarter.java:25) [canal.server-1.1.5-SNAPSHOT.jar:na]
+        at com.alibaba.otter.canal.server.CanalMQStarter$CanalMQRunnable.run(CanalMQStarter.java:227) [canal.server-1.1.5-SNAPSHOT.jar:na]
+        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149) [na:1.8.0_281]
+        at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624) [na:1.8.0_281]
+        at java.lang.Thread.run(Thread.java:748) [na:1.8.0_281]
+Caused by: java.util.concurrent.ExecutionException: org.apache.kafka.common.errors.TimeoutException: Failed to update metadata after 60000 ms.
+        at org.apache.kafka.clients.producer.KafkaProducer$FutureFailure.<init>(KafkaProducer.java:1150) ~[na:na]
+        at org.apache.kafka.clients.producer.KafkaProducer.doSend(KafkaProducer.java:846) ~[na:na]
+        at org.apache.kafka.clients.producer.KafkaProducer.send(KafkaProducer.java:784) ~[na:na]
+        at org.apache.kafka.clients.producer.KafkaProducer.send(KafkaProducer.java:671) ~[na:na]
+        at com.alibaba.otter.canal.connector.kafka.producer.CanalKafkaProducer.produce(CanalKafkaProducer.java:267) ~[na:na]
+        at com.alibaba.otter.canal.connector.kafka.producer.CanalKafkaProducer.send(CanalKafkaProducer.java:260) ~[na:na]
+        at com.alibaba.otter.canal.connector.kafka.producer.CanalKafkaProducer.send(CanalKafkaProducer.java:165) ~[na:na]
+        ... 6 common frames omitted
+Caused by: org.apache.kafka.common.errors.TimeoutException: Failed to update metadata after 60000 ms.
+2021-02-24 10:07:35.793 [pool-4-thread-1] ERROR c.a.o.canal.connector.kafka.producer.CanalKafkaProducer - java.util.concurrent.ExecutionException: org.apache.kafka.common.errors.TimeoutException: Failed to update metadata after 60000 ms.
+java.lang.RuntimeException: java.util.concurrent.ExecutionException: org.apache.kafka.common.errors.TimeoutException: Failed to update metadata after 60000 ms.
+        at com.alibaba.otter.canal.connector.kafka.producer.CanalKafkaProducer.send(CanalKafkaProducer.java:183) ~[na:na]
+        at com.alibaba.otter.canal.server.CanalMQStarter.worker(CanalMQStarter.java:185) [canal.server-1.1.5-SNAPSHOT.jar:na]
+        at com.alibaba.otter.canal.server.CanalMQStarter.access$500(CanalMQStarter.java:25) [canal.server-1.1.5-SNAPSHOT.jar:na]
