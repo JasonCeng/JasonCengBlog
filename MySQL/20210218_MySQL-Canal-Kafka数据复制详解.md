@@ -285,6 +285,9 @@ bin/stop.sh: 63: bin/stop.sh let: not found
 
 ## 参考
 [1] Canal QuickStart[https://github.com/alibaba/canal/wiki/QuickStart]
+
 [2] Canal Kafka RocketMQ QuickStart[https://github.com/alibaba/canal/wiki/Canal-Kafka-RocketMQ-QuickStart]
+
 [3] 利用Canal投递MySQL Binlog到Kafka[https://www.jianshu.com/p/93d9018e2fa1]
+
 [4] canal实时同步mysql表数据到Kafka[https://www.cnblogs.com/zpan2019/p/13323035.html]
