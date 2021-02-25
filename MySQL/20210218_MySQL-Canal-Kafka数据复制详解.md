@@ -1,6 +1,17 @@
 # MySQL-Canal-Kafka数据复制详解
 
+本文基于Ubuntu 16.04 LTS
+
 ## 环境说明
+- Java 8+
+- 搭建好ZooKeeper集群
+- 搭建好Kafka集群
+
+若未搭建ZooKeeper集群、Kafka集群，可参考：
+
+<a href='https://github.com/JasonCeng/JasonCengBlog/blob/main/zookeeper/20210206_Linux%E4%B8%8B%E6%90%AD%E5%BB%BAZooKeeper%E9%9B%86%E7%BE%A4.md' target='_blank'>Linux下搭建ZooKeeper集群.md</a>
+
+<a href='https://github.com/JasonCeng/JasonCengBlog/blob/main/Kafka/20210207_Linux%E4%B8%8B%E6%90%AD%E5%BB%BAkafka%E9%9B%86%E7%BE%A4.md' target='_blank'>Linux下搭建kafka集群.md</a>
 
 ## 一、源MySQL配置
 ### 1、开启 Binlog 写入功能
@@ -12,7 +23,7 @@ $ vim /etc/my.cnf
 [mysqld]
 log-bin=mysql-bin # 开启 binlog
 binlog-format=ROW # 选择 ROW 模式
-server_id=1 # 配置 MySQL replaction 需要定义，不要和 canal 的 slaveId 重复
+server_id=1 # 配置 MySQL replaction 需要定义，不能和 canal 的 slaveId 重复
 
 #重启MySQL数据库
 $ service mysql restart
@@ -30,7 +41,7 @@ $ service mysql restart
 
 ## 二、安装ZooKeeper
 
-参考：<a href='https://github.com/JasonCeng/JasonCengBlog/blob/main/zookeeper/20210206_Linux%E4%B8%8B%E6%90%AD%E5%BB%BAZooKeeper%E9%9B%86%E7%BE%A4.md' target='_blank'>JasonCengBlog/zookeeper/20210206_Linux下搭建ZooKeeper集群.md</a>
+详细请参考：<a href='https://github.com/JasonCeng/JasonCengBlog/blob/main/zookeeper/20210206_Linux%E4%B8%8B%E6%90%AD%E5%BB%BAZooKeeper%E9%9B%86%E7%BE%A4.md' target='_blank'>JasonCengBlog/zookeeper/20210206_Linux下搭建ZooKeeper集群.md</a>
 
 1、在**所有节点**上启动zkServer
 ```shell
@@ -42,13 +53,11 @@ $ zkServer.sh start&
 $ zkServer.sh status
 ```
 
-
-
 ## 三、安装KafKa
 
-参考：<a href='https://github.com/JasonCeng/JasonCengBlog/blob/main/Kafka/20210207_Linux%E4%B8%8B%E6%90%AD%E5%BB%BAkafka%E9%9B%86%E7%BE%A4.md' target='_blank'>JasonCengBlog/Kafka/20210207_Linux下搭建kafka集群.md</a>
+详细请参考：<a href='https://github.com/JasonCeng/JasonCengBlog/blob/main/Kafka/20210207_Linux%E4%B8%8B%E6%90%AD%E5%BB%BAkafka%E9%9B%86%E7%BE%A4.md' target='_blank'>JasonCengBlog/Kafka/20210207_Linux下搭建kafka集群.md</a>
 
-1、在**所有节点**上启动kafka
+### 1、在**所有节点**上启动kafka
 ```shell
 #从后台启动Kafka集群（3台都需要启动）
 $ cd /usr/local/kafka_2.13-2.7.0/bin #进入到kafka的bin目录 
@@ -58,24 +67,37 @@ $ ./kafka-server-start.sh -daemon ../config/server.properties
 $ jps
 ```
 
-2、创建Topic
+### 2、创建与查看Topic
 ```shell
 $ cd /usr/local/kafka_2.13-2.7.0/bin #进入到kafka的bin目录 
 
 #创建Topic
-$ ./kafka-topics.sh --create --zookeeper 192.168.1.113:2181,192.168.1.114:2181,192.168.1.115:2181 --replication-factor 2 --partitions 1 --topic example
+$ ./kafka-topics.sh --create --zookeeper 192.168.1.113:2181,192.168.1.114:2181,192.168.1.115:2181 --replication-factor 2 --partitions 1 --topic hello_canal
 #解释
 # --create  表示创建
 # --zookeeper 192.168.1.113:2181  后面的参数是zk的集群节点
 # --replication-factor 2  表示复本数
 # --partitions 1  表示分区数
-# --topic foo  表示主题名称为example
+# --topic hello_canal  表示主题名称为hello_canal
 
 #查看topic 列表：
 $ ./kafka-topics.sh --list --zookeeper 192.168.1.113:2181,192.168.1.114:2181,192.168.1.115:2181
 
 #查看指定topic：
-$ ./kafka-topics.sh --describe --zookeeper 192.168.1.113:2181,192.168.1.114:2181,192.168.1.115:2181 --topic example
+$ ./kafka-topics.sh --describe --zookeeper 192.168.1.113:2181,192.168.1.114:2181,192.168.1.115:2181 --topic hello_canal
+Topic: hello_canal	PartitionCount: 1	ReplicationFactor: 2	Configs: 
+	Topic: hello_canal	Partition: 0	Leader: 0	Replicas: 0,2	Isr: 0,2
+```
+
+### 3、验证Kafka集群是否启动成功
+```shell
+# 随便在一个zk节点上启动zkCli(zookeeper客户端)
+$ sh $ZOOKEEPER_HOME/bin/zkCli.sh
+
+$ [zk: localhost:2181(CONNECTED) 0] ls /brokers/ids
+[0, 1, 2]
+
+# 如果能看到三台kafka节点的broker.id，则说明三台kafka节点正常启动
 ```
 
 ## 四、安装Canal.server
@@ -99,7 +121,7 @@ $ tar -zxvf canal.deployer-1.1.5-SNAPSHOT.tar.gz -C /usr/local/canal
 ### （二）修改配置文件
 #### 1、修改instance配置文件
 ```shell
-$ vim /usr/local/canal/conf/example/instance.properties
+$ vim /usr/local/canal/conf/hello_canal/instance.properties
 
 ## mysql serverId
 canal.instance.mysql.slaveId = 1234
@@ -120,11 +142,10 @@ canal.instance.connectionCharset = UTF-8
 #table regex
 canal.instance.filter.regex = .\*\\\\..\*
 # mq config
-canal.mq.topic=example
+canal.mq.topic=hello_canal
 # dynamic topic route by schema or table regex
 #canal.mq.dynamicTopic=mytest1.user,mytest2\\..*,.*\\..*
 canal.mq.partition=0
-
 ```
 `canal.instance.connectionCharset`代表数据库的编码方式对应到 java 中的编码类型，比如 UTF-8，GBK，ISO-8859-1
 
@@ -138,8 +159,8 @@ $ vim /usr/local/canal/conf/canal.properties
 # 可选项: tcp(默认), kafka, RocketMQ
 canal.serverMode = kafka
 # ...
-# kafka/rocketmq 集群配置: 192.168.1.113:9092,192.168.1.114:9092,192.168.1.115:9092 
-canal.mq.servers = 127.0.0.1:6667
+# kafka/rocketmq 集群配置，如果你的mq已经做了集群配置，则需要把所有节点的ip:port都写全在下方
+canal.mq.servers = 192.168.1.113:9092,192.168.1.114:9092,192.168.1.115:9092
 canal.mq.retries = 0
 # flagMessage模式下可以调大该值, 但不要超过MQ消息体大小上限
 canal.mq.batchSize = 16384
@@ -181,19 +202,19 @@ $ vim /usr/local/canal/logs/canal/canal.log
 
 #### 3、查看instance的日志
 ```shell
-$ vim /usr/local/canal/logs/example/example.log
+$ vim /usr/local/canal/logs/hello_canal/hello_canal.log
 ```
 
 ```log
 2021-02-22 16:54:24.284 [main] INFO  c.a.o.c.i.spring.support.PropertyPlaceholderConfigurer - Loading properties file from class path resource [canal.properties]
-2021-02-22 16:54:24.308 [main] INFO  c.a.o.c.i.spring.support.PropertyPlaceholderConfigurer - Loading properties file from class path resource [example/instance.properties]
+2021-02-22 16:54:24.308 [main] INFO  c.a.o.c.i.spring.support.PropertyPlaceholderConfigurer - Loading properties file from class path resource [hello_canal/instance.properties]
 2021-02-22 16:54:25.143 [main] INFO  c.a.o.c.i.spring.support.PropertyPlaceholderConfigurer - Loading properties file from class path resource [canal.properties]
-2021-02-22 16:54:25.144 [main] INFO  c.a.o.c.i.spring.support.PropertyPlaceholderConfigurer - Loading properties file from class path resource [example/instance.properties]
-2021-02-22 16:54:26.586 [main] INFO  c.a.otter.canal.instance.spring.CanalInstanceWithSpring - start CannalInstance for 1-example
+2021-02-22 16:54:25.144 [main] INFO  c.a.o.c.i.spring.support.PropertyPlaceholderConfigurer - Loading properties file from class path resource [hello_canal/instance.properties]
+2021-02-22 16:54:26.586 [main] INFO  c.a.otter.canal.instance.spring.CanalInstanceWithSpring - start CannalInstance for 1-hello_canal
 2021-02-22 16:54:26.642 [main] WARN  c.a.o.canal.parse.inbound.mysql.dbsync.LogEventConvert - --> init table filter : ^.*\..*$
 2021-02-22 16:54:26.642 [main] WARN  c.a.o.canal.parse.inbound.mysql.dbsync.LogEventConvert - --> init table black filter : ^mysql\.slave_.*$
-2021-02-22 16:54:27.057 [destination = example , address = ubuntu-master.com/192.168.1.113:3306 , EventParser] WARN  c.a.o.c.p.inbound.mysql.rds.RdsBinlogEventParserProxy - ---> begin to find start position, it will be long time for reset or first position
-2021-02-22 16:54:27.176 [destination = example , address = ubuntu-master.com/192.168.1.113:3306 , EventParser] WARN  c.a.o.c.p.inbound.mysql.rds.RdsBinlogEventParserProxy - prepare to find start position just show master status
+2021-02-22 16:54:27.057 [destination = hello_canal , address = ubuntu-master.com/192.168.1.113:3306 , EventParser] WARN  c.a.o.c.p.inbound.mysql.rds.RdsBinlogEventParserProxy - ---> begin to find start position, it will be long time for reset or first position
+2021-02-22 16:54:27.176 [destination = hello_canal , address = ubuntu-master.com/192.168.1.113:3306 , EventParser] WARN  c.a.o.c.p.inbound.mysql.rds.RdsBinlogEventParserProxy - prepare to find start position just show master status
 2021-02-22 16:54:27.179 [main] INFO  c.a.otter.canal.instance.core.AbstractCanalInstance - start successful....
 ```
 
@@ -211,7 +232,7 @@ $ sh bin/stop.sh
 在另一台服务器上创建一个消费者：
 ```shell
 $ cd /usr/local/kafka_2.13-2.7.0/bin
-$ ./kafka-console-consumer.sh --bootstrap-server 192.168.1.114:9092 --topic example --from-beginning
+$ ./kafka-console-consumer.sh --bootstrap-server 192.168.1.113:9092,192.168.1.114:9092,192.168.1.115:9092 --topic hello_canal --from-beginning
 ```
 
 *注：Kafka 从 2.2 版本开始将` kafka-topic.sh `脚本中的 ` −−zookeeper `参数标注为 “过时”，推荐使用 ` −−bootstrap-server `参数。*
@@ -221,5 +242,49 @@ $ ./kafka-console-consumer.sh --bootstrap-server 192.168.1.114:9092 --topic exam
 #### 2、在源mysql数据库上修改数据
 ```sql
 mysql> use test;
-mysql> insert into fk values(6,'test',18);
+mysql> insert into fk values(13,'hello_canal',19);
 ```
+
+#### 3、消费者窗口输出内容
+```log
+{"data":[{"id":"13","name":"hello_canal","age":"19"}],"database":"test","es":1614252283000,"id":2,"isDdl":false,"mysqlType":{"id":"int(10) unsigned","name":"varchar(100)","age":"int(11)"},"old":null,"pkNames":["id"],"sql":"","sqlType":{"id":4,"name":12,"age":4},"table":"fk","ts":1614252283248,"type":"INSERT"}
+```
+
+说明canal已经成功捕获到源MySQL的变化数据binlog并投递到kafka集群的hello_canal主题中。
+
+## 六、遇到的问题
+### （一）canal同步mysql binlog到kafka，启动后instance日志报`TimeoutException: Failed to update metadata after 60000 ms.`
+
+#### 1、详细报错信息：
+```log
+Caused by: java.util.concurrent.ExecutionException: org.apache.kafka.common.errors.TimeoutException: Failed to update metadata after 60000 ms.
+```
+
+#### 2、报错可能原因及方案：
+
+i. kafka的配置文件`config/server.properties`中`listeners=PLAINTEXT://your.host.name:9092`以及`advertise.listeners=PLAINTEXT://your.host.name:9092`没有配置，导致canal无法与kafka进行socket通信。补充这两项配置，重启kafka即可。
+
+ii. canal的配置文件`conf/canal.properties`中`kafka.bootstrap.servers = x.x.x.x:9092`没有把所有的kafka节点配上。报错是因为只配了一台kafka节点，而我是以集群模式启动了三个kafka节点，所以修改为`kafka.bootstrap.servers = x.x.x.1:9092,x.x.x.2:9092,x.x.x.3:9092`，重启canal即可。
+
+### （二）canal无法stop
+
+#### 1、详细报错信息：
+```log
+bin/stop.sh: 52: kill: No such process
+
+bin/stop.sh: 58: [: unexpected operator
+bin/stop.sh: 63: bin/stop.sh let: not found
+```
+
+#### 2、报错原因及方案：
+报错：`let: not found`
+
+因为在ubuntu默认是指向`bin/dash`解释器的，`dash`是阉割版的`bash`,其功能远没有`bash`强大和丰富。并且`dash`不支持`let`和`i++`等功能.
+
+解决办法：`sudo dpkg-reconfigure dash`，选择`"No"`, 表示用`bash`代替`dash`。
+
+## 参考
+[1] Canal QuickStart[https://github.com/alibaba/canal/wiki/QuickStart]
+[2] Canal Kafka RocketMQ QuickStart[https://github.com/alibaba/canal/wiki/Canal-Kafka-RocketMQ-QuickStart]
+[3] 利用Canal投递MySQL Binlog到Kafka[https://www.jianshu.com/p/93d9018e2fa1]
+[4] canal实时同步mysql表数据到Kafka[https://www.cnblogs.com/zpan2019/p/13323035.html]
