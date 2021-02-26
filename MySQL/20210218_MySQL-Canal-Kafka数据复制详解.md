@@ -262,9 +262,13 @@ Caused by: java.util.concurrent.ExecutionException: org.apache.kafka.common.erro
 
 #### 2、报错可能原因及方案：
 
-i. kafka的配置文件`config/server.properties`中`listeners=PLAINTEXT://your.host.name:9092`以及`advertise.listeners=PLAINTEXT://your.host.name:9092`没有配置，导致canal无法与kafka进行socket通信。补充这两项配置，重启kafka即可。
+**报错原因1**：kafka的配置文件`config/server.properties`中`listeners=PLAINTEXT://your.host.name:9092`以及`advertise.listeners=PLAINTEXT://your.host.name:9092`没有配置，导致canal无法与kafka进行socket通信。
 
-ii. canal的配置文件`conf/canal.properties`中`kafka.bootstrap.servers = x.x.x.x:9092`没有把所有的kafka节点配上。报错是因为只配了一台kafka节点，而我是以集群模式启动了三个kafka节点，所以修改为`kafka.bootstrap.servers = x.x.x.1:9092,x.x.x.2:9092,x.x.x.3:9092`，重启canal即可。
+**解决方案**：补充上述两项配置，重启kafka即可。
+
+**报错原因2**：canal的配置文件`conf/canal.properties`中`kafka.bootstrap.servers = x.x.x.x:9092`没有把所有的kafka节点配上。报错是因为只配了一台kafka节点，而我是以集群模式启动了三个kafka节点。
+
+**解决方案**：修改`conf/canal.properties`中为`kafka.bootstrap.servers = x.x.x.1:9092,x.x.x.2:9092,x.x.x.3:9092`，重启canal即可。
 
 ### （二）canal无法stop
 
