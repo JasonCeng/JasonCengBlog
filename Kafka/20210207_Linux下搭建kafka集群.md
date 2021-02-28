@@ -1,5 +1,9 @@
 # Linux下搭建Kafka集群
-本文基于Ubuntu 16.04 LTS
+
+## 摘要
+Kafka 是一个分布式的基于push-subscribe的消息系统，它具备快速、可扩展、可持久化的特点。由 LinkedIn 开源，用作 LinkedIn 的活动流（Activity Stream）和运营数据处理管道（Pipeline）的基础。现在是Apache旗下的一个开源系统，作为Hadoop生态系统的一部分，被各种商业公司广泛应用。它的最大的特性就是可以实时的处理大量数据以满足各种需求场景：比如基于Hadoop的批处理系统、低延迟的实时系统、Flink/Storm/Spark流式处理引擎。可以说是现代分布式系统的基石，学习kafka的使用、原理变得十分必要。
+
+本文基于Ubuntu 16.04 LTS，介绍如何搭建1主2备的kafka集群。
 
 ## 环境依赖
 - 服务器数量 >= 2

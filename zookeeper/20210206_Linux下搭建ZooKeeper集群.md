@@ -1,5 +1,9 @@
 # Linux下搭建ZooKeeper集群
-本文基于Ubuntu 16.04 LTS
+
+## 摘要
+Zookeeper是针对大型分布式系统的高可靠的协调系统。它基于对Paxos算法的实现，使该框架保证了分布式环境中数据的强一致性，也正是基于这样的特性，使得ZooKeeper解决很多分布式问题。把分布式集群当成zoo，那么zookeeper就是管理员。zookeeper本身也可以是个集群，通过几台follow机器选举leader。zookeeper的主要作用包括，命名服务，配置管理，分布式一致性锁，HA(High available)。正是因为zookeeper在分布式系统领域如此重要，可以说是基石，所以我们绕不开要学习其使用及原理。
+
+本文基于Ubuntu 16.04 LTS，介绍如何搭建1主2从的zookeeper集群。
 
 ## 环境依赖
 - 奇数台服务器，且非observer节点数>1；如果是偶数台服务器，可以把多出来的1台设置为observer
@@ -113,7 +117,7 @@ $ scp -r zookeeper_3.6.2 root@192.168.1.115:/usr/local/
 ```
 
 ## 四、配置环境变量
-需要再各个服务器上进行配置：
+需要在各个服务器上进行配置：
 ```shell
 vim /etc/profile
 
