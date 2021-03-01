@@ -1,5 +1,8 @@
 # Flume+Kafka获取MySQL数据
 
+## 摘要
+MySQL被广泛用于海量业务的存储数据库，在大数据时代，我们亟需对其中的海量数据进行分析，但在MySQL之上进行大数据分析显然是不现实的，这会影响业务系统的运行稳定。如果我们要实时地分析这些数据，则需要实时地将其复制到适合OLAP的数据系统上。本文介绍一种数据采集工具——Flume，由cloudera软件公司于2009年被捐赠了apache软件基金会，现已成为apache top项目之一。使用Flume构建一个对MySQL数据的采集，并投递到Kafka的一个链路。
+
 ## 环境依赖
 - Java 8+
 - Flume 1.9
@@ -179,6 +182,9 @@ $ cp /data/mysql-connector-java-5.1.49/mysql-connector-java-5.1.49-bin.jar $FLUM
 ```
 
 ## 五、启动相关组件
+
+安装Zookeeper详细请参考：<a href='https://github.com/JasonCeng/JasonCengBlog/blob/main/zookeeper/20210206_Linux%E4%B8%8B%E6%90%AD%E5%BB%BAZooKeeper%E9%9B%86%E7%BE%A4.md' target='_blank'>JasonCengBlog/zookeeper/20210206_Linux下搭建ZooKeeper集群.md</a>
+
 ### 1、启动ZooKeeper
 在**所有节点**上启动zkServer
 ```shell
@@ -187,6 +193,9 @@ $ zkServer.sh start
 ```
 
 ### 2、启动Kafka
+
+安装Kafka详细请参考：<a href='https://github.com/JasonCeng/JasonCengBlog/blob/main/Kafka/20210207_Linux%E4%B8%8B%E6%90%AD%E5%BB%BAkafka%E9%9B%86%E7%BE%A4.md' target='_blank'>JasonCengBlog/Kafka/20210207_Linux下搭建kafka集群.md</a>
+
 新开一个终端窗口
 ```shell
 #从后台启动Kafka集群（3台都需要启动）
