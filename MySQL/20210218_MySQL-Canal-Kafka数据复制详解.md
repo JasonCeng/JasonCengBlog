@@ -242,6 +242,20 @@ $ ./kafka-console-consumer.sh --bootstrap-server 192.168.1.113:9092,192.168.1.11
 
 *端口也由之前的zookeeper通信端口`2181`，改为了kafka通信端口`9092`。*
 
+#### 2、创建测试表
+```sql
+mysql> create database if not exists test default charset utf8 collate utf8_general_ci;
+
+mysql> use test;
+
+mysql> create table fk (
+id int UNSIGNED AUTO_INCREMENT,
+name VARCHAR(100) NOT NULL,
+age int NOT NULL,
+PRIMARY KEY ( id )
+);
+```
+
 #### 2、在源mysql数据库上修改数据
 ```sql
 mysql> use test;
@@ -351,6 +365,10 @@ mysql> SHOW MASTER STATUS\G
 +------------------+----------+--------------+------------------+-------------------+
 1 row in set (0.00 sec)
 ```
+
+### （四）Q：不同instance的slaveId是否需要不同？
+
+Canal官方解答：不和serverId冲突就可以。即不同实例的slaveId相同也没有影响，只需保持不同的机器上的canal服务之间的slaveId不同。
 
 ## 参考
 [1] Canal QuickStart[https://github.com/alibaba/canal/wiki/QuickStart]
