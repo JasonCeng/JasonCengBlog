@@ -290,6 +290,68 @@ bin/stop.sh: 63: bin/stop.sh let: not found
 
 解决办法：`sudo dpkg-reconfigure dash`，选择`"No"`, 表示用`bash`代替`dash`。
 
+### （三）command:'show master status' has an error!pls check.
+#### 1、详细报错
+instance日志中有如下报错：
+```shell
+caused by com.alibaba.otter.canal.parse.exception.CanalParseException:command:'show master status' has an error!pls check.you need (at least one of) the SUPER,REPLICATION CLIENT privilege(s) for thie operation 2021-03-08 14:03:03:13.903 [destination = hello_canal , address = /192.168.0.113:3306 , EventParser] 
+```
+
+#### 2、报错原因及方案：
+**报错原因：**
+
+从报错信息可以判断是mysql配置出了问题。
+
+在mysql上执行`show master status`，输出结果为空：
+```shell
+mysql> show master status;
+Empty set (0.00 sec)
+```
+
+原因是mysql没有开启日志。
+查看log_bin选项：
+```shell
+mysql> show variables like '%log_bin%';
++---------------------------------+-------+
+| Variable_name                   | Value |
++---------------------------------+-------+
+| log_bin                         | OFF   |
+| log_bin_basename                |       |
+| log_bin_index                   |       |
+| log_bin_trust_function_creators | OFF   |
+| log_bin_use_v1_row_events       | OFF   |
+| sql_log_bin                     | ON    |
++---------------------------------+-------+
+6 rows in set (0.00 sec)
+```
+可以看到`log_bin`是`OFF`。
+
+**解决方案：**
+
+在mysql 配置文件`·` /etc/my.cnf `中
+
+`[mysqld]`下添加:
+```shell
+log-bin=mysql-bin
+```
+
+保存后重启mysql服务：
+```shell
+#重启MySQL数据库
+$ service mysql restart
+```
+
+再次执行`show master status`命令
+```shell
+mysql> SHOW MASTER STATUS\G
++------------------+----------+--------------+------------------+-------------------+
+| File             | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
++------------------+----------+--------------+------------------+-------------------+
+| mysql-bin.000002 |      154 | test         | mysql            |                   |
++------------------+----------+--------------+------------------+-------------------+
+1 row in set (0.00 sec)
+```
+
 ## 参考
 [1] Canal QuickStart[https://github.com/alibaba/canal/wiki/QuickStart]
 
@@ -298,3 +360,5 @@ bin/stop.sh: 63: bin/stop.sh let: not found
 [3] 利用Canal投递MySQL Binlog到Kafka[https://www.jianshu.com/p/93d9018e2fa1]
 
 [4] canal实时同步mysql表数据到Kafka[https://www.cnblogs.com/zpan2019/p/13323035.html]
+
+[5] mysql show master status为空值[https://blog.csdn.net/lanyang123456/article/details/85221071]
