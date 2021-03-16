@@ -34,6 +34,12 @@ $ docker --version
 ```shell
 $ sudo docker run hello-world
 ```
+
+### 9、创建docker目录，以备后用
+```shell
+$ sudo mkdir ~/docker
+```
+
 ## 二、基本命令
 ```shell
 # 启动docker
