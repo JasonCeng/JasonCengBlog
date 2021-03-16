@@ -8,9 +8,9 @@
 
 第二步：更新host文件，如下：
 ```shell
-192.30.253.112 github.com
+140.82.112.4 github.com
 
-151.101.185.194 github.global.ssl.fastly.net
+199.232.69.194 github.global.ssl.fastly.net
 ```
 
 第三步：打开CMD，清理下DNS
