@@ -6,7 +6,7 @@
 
 2、github.global.ssl.fastly.net
 
-第二步：更新host文件，如下：
+第二步：更新host文件（C:\Windows\System32\drivers\etc\hosts），如下：
 ```shell
 140.82.112.4 github.com
 
