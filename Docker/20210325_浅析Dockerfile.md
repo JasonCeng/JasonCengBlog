@@ -15,7 +15,11 @@ CMD ["/bin/bash", "/go/src/script/start.sh"]
 - `EXPOSE` 这是对外开放的端口。
 - `CMD` 执行一个带参数的命令。这里是为了让镜像启动时去执行script/start.sh的脚本。
 
-注意：`COPY . . `This command will copy the current working directory of your local machine into the current working directory of the container.
+注意：`COPY . . `这个指令会将当前目录下的所有文件拷贝到容器的WORKDIR下。
 
-参考：https://www.jianshu.com/p/5939dcf5c96e
+参考
+
+[1]https://www.jianshu.com/p/5939dcf5c96e
+
+[2]https://stackoverflow.com/questions/54986009/copy-in-dockerfile
 

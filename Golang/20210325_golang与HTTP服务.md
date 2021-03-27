@@ -73,8 +73,37 @@ get_act := query["act"][0]
 fmt.Println(get_act)
 ```
 
+### (二)获取POST参数
+
+ 
+
+#### 2.1 获取单个POST字段值
+```go
+post_act := req.PostFormValue("act")
+fmt.Println(post_act)
+```
+
+#### 2.2 获取多个POST字段值
+
+如果我们在提交的时候，有两个一样input-name怎么办呢？如下的html代码
+```html
+<form method="POST" action="login?act=in">
+<input type="text" name="username" class="text" />
+<input type="text" name="username" class="text" />
+<input type="submit" name="login_button" value="登录">
+</form>
+```
+
+这时候就要把post传输的参数当成数组，通过PostFormValue就只能获得第一个input的内容。怎么能两个都获取到呢？
+```go
+post_act := req.PostForm["username"]
+fmt.Println(post_act)
+```
+
 参考：
 
 https://blog.csdn.net/lengyuezuixue/article/details/79094323
 
 https://blog.csdn.net/why444216978/article/details/102261982
+
+https://studygolang.com/articles/5903
